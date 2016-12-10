@@ -13,16 +13,25 @@
 - name: "Checkout Dative code"
   git:
     repo: "{{ dative_src_repo }}"
-    dest: "{{ dative_src_dir }}/dative"
+    dest: "{{ dative_src_dir }}"
     version: "{{ dative_src_version }}"
     force: "yes"
     accept_hostkey: "yes"
   tags: "dative,dativesrc-clone"
 
+- name: "Make vagrant own dative/"
+  file:
+    path: "{{ dative_src_dir }}"
+    owner: "vagrant"
+    group: "vagrant"
+    recurse: "yes"
+  become: "yes"
+  tags: "dative,dativesrc-clone"
+
 - name: "Get Dative latest commit hash"
   command: "git rev-parse HEAD"
   args:
-    chdir: "{{ dative_src_dir }}/dative"
+    chdir: "{{ dative_src_dir }}"
   register: "latest_commit_dative"
   tags: "dative,dativesrc-clone"
 
@@ -53,21 +62,23 @@
 
 - name: "Install Dative NPM dependencies (in package.json)"
   npm:
-    path: "{{ dative_src_dir }}/dative"
+    path: "{{ dative_src_dir }}"
   tags: "dative,dativejs"
 
 - name: "Install Dative Bower packages (in bower.json)"
-  bower:
-    path: "{{ dative_src_dir }}/dative"
-  tags: "dative,dativejs"
-
-- name: "Install Dative Bower test packages (in test/bower.json)"
-  bower:
-    path: "{{ dative_src_dir }}/dative/test"
-  tags: "dative,dativejs"
-
-- name: "Serve the Dative app (using Grunt)"
-  shell: "grunt serve:dist"
+  shell: "node_modules/bower/bin/bower install"
   args:
-    chdir: "{{ dative_src_dir }}/dative"
+    chdir: "{{ dative_src_dir }}"
+  become: "no"
+  tags: "dative,dativejs"
+
+# TODO: building dative into ugli/mini-fied dist/ is good for production, but
+# we don't want to do this during development. Implement development serve
+# behaviour!
+
+- name: "Build Dative"
+  shell: "grunt build"
+  args:
+    chdir: "{{ dative_src_dir }}"
+  become: "no"
   tags: "dative,dativejs"
