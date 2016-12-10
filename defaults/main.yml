@@ -1,0 +1,21 @@
+---
+
+# Default values for role variables.
+# The playbook will use these defaults if not overriden in the playbook
+# (or host_vars, group_vars, etc.)
+
+# directory to install source code
+dative_src_dir: "/opt/dative"
+
+# Components to install
+dative_src_install_dative: "yes"
+
+# Define the type of environment: "production" or "development". The latter
+# will deploy some extra stuff to make the development workflow easier.
+dative_src_environment_type: "development"
+
+# Repositories
+dative_src_repo: "https://github.com/jrwdunham/dative.git"
+
+# Branches,
+dative_src_version: "master"

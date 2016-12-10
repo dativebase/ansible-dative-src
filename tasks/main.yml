@@ -1,0 +1,73 @@
+---
+
+#
+# Common tasks
+#
+
+- name: "Set fact: type of environment"
+  set_fact:
+    is_dev: "{{ dative_src_environment_type == 'development' }}"
+    is_prod: "{{ dative_src_environment_type == 'production' }}"
+  tags: "always" # inocuous to use always here
+
+- name: "Checkout Dative code"
+  git:
+    repo: "{{ dative_src_repo }}"
+    dest: "{{ dative_src_dir }}/dative"
+    version: "{{ dative_src_version }}"
+    force: "yes"
+    accept_hostkey: "yes"
+  tags: "dative,dativesrc-clone"
+
+- name: "Get Dative latest commit hash"
+  command: "git rev-parse HEAD"
+  args:
+    chdir: "{{ dative_src_dir }}/dative"
+  register: "latest_commit_dative"
+  tags: "dative,dativesrc-clone"
+
+- name: "Save Dative latest commit hash"
+  shell: "echo {{ latest_commit_dative.stdout }} > {{ dative_src_dir }}/dative-commit.txt"
+  tags: "dative,dativesrc-clone"
+# TODO: Make use of latest_commit_dative
+
+- name: "Install Dative package dependencies (node and npm)"
+  apt:
+    pkg: "{{ item }}"
+    state: "latest"
+  with_items: "{{ dative_src_pkgdeps }}"
+  tags: "dative,dativesrc-osdep"
+
+- name: "Link nodejs to node"
+  file:
+    src: "/usr/bin/nodejs"
+    dest: "/usr/bin/node"
+    state: "link"
+  tags: "dative,dativesrc-osdep"
+
+- name: "Install GruntJS globally"
+  npm:
+    name: "grunt-cli"
+    global: "yes"
+  tags: "dative,dativesrc-osdep"
+
+- name: "Install Dative NPM dependencies (in package.json)"
+  npm:
+    path: "{{ dative_src_dir }}/dative"
+  tags: "dative,dativejs"
+
+- name: "Install Dative Bower packages (in bower.json)"
+  bower:
+    path: "{{ dative_src_dir }}/dative"
+  tags: "dative,dativejs"
+
+- name: "Install Dative Bower test packages (in test/bower.json)"
+  bower:
+    path: "{{ dative_src_dir }}/dative/test"
+  tags: "dative,dativejs"
+
+- name: "Serve the Dative app (using Grunt)"
+  shell: "grunt serve:dist"
+  args:
+    chdir: "{{ dative_src_dir }}/dative"
+  tags: "dative,dativejs"

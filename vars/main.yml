@@ -1,0 +1,7 @@
+---
+# vars file for ansible-role-dative-src
+
+# package dependencies
+dative_src_pkgdeps:
+  - "nodejs"
+  - "npm"
